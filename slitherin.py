@@ -53,6 +53,27 @@ change_to = direction
 # Setting initial score
 score = 0
 
+# Setting High Score and loading from file if it exists
+high_score = 0
+
+# Function to load high score
+def load_high_score():
+    global high_score
+    try:
+        with open('high_score.txt', 'r') as f:
+            high_score = int(f.read())
+    except (FileNotFoundError, ValueError):
+        # If file doesn't exist or contains invalid data, keep default high_score
+        high_score = 0
+
+# Function to save high score
+def save_high_score():
+    with open('high_score.txt', 'w') as f:
+        f.write(str(high_score))
+
+# Load high score at startup
+load_high_score()
+
 # Displaying Score function
 def score_show(choice, color, font, size):
     # Creating font object font_score
@@ -67,6 +88,12 @@ def score_show(choice, color, font, size):
 
     # Displaying text
     game_window.blit(surface_score, score_rect)
+    
+    # Also display high score during gameplay
+    high_score_surface = font_score.render('High Score: ' + str(high_score), True, color)
+    high_score_rect = high_score_surface.get_rect()
+    high_score_rect.topright = (x_window - 10, 10)  # Position in top right
+    game_window.blit(high_score_surface, high_score_rect)
 
 # Game over check function
 def is_game_over():
@@ -98,7 +125,19 @@ def show_game_over():
     final_score_rect.midtop = (x_window/2, y_window/2)
     game_window.blit(final_score_text, final_score_rect)
 
-    # Restart Intrsuctions
+    # High Score
+    global high_score
+    if score > high_score:
+        high_score = score
+        save_high_score()  # Save immediately when a new high score is achieved
+        
+    font = pygame.font.SysFont('times new roman', 20)
+    high_score_text = font.render("High Score: " + str(high_score), True, white)
+    high_score_rect = high_score_text.get_rect()
+    high_score_rect.midtop = (x_window/2, y_window/2.5)
+    game_window.blit(high_score_text, high_score_rect)
+
+    # Restart Instructions
     font = pygame.font.SysFont('times new roman', 20)
     restart_text = font.render("To play again press R", True, white)
     restart_rect = restart_text.get_rect()
@@ -120,12 +159,14 @@ def restart_game():
     change_to = direction
     score = 0
     game_state = PLAYING
+    # High score is preserved between games, no need to reload it here
 
 # Slitherin Snake Main Function
 while True:
     # Handling controller(key) events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            save_high_score()  # Save high score before quitting
             pygame.quit()
             sys.exit()
         if event.type == pygame.KEYDOWN:
